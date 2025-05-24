@@ -1,1 +1,14 @@
-{}
+{
+  "player": {
+    "rolled": {
+      "id" : 10,
+      "name": "Number of rolls",
+      "type": "int"
+    },
+    "sausages": {
+      "id" : 11,
+      "name": "Number of sausages",
+      "type": "int"
+    },
+  }
+}

@@ -1,16 +1,17 @@
+
 <?php
+require_once("modules/php/constants.inc.php");
 /**
  *------
  * BGA framework: Gregory Isabelli & Emmanuel Colin & BoardGameArena
- * SausageSizzle implementation : © <Your name here> <Your email address here>
- *
+ * sausagesizzle implementation : © Russ King srussking@gmail.com
  * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
  * See http://en.boardgamearena.com/#!doc/Studio for more information.
  * -----
  *
  * states.inc.php
  *
- * SausageSizzle game states description
+ * sausagesizzle game states description
  *
  */
 
@@ -54,50 +55,48 @@ $machinestates = [
 
     // The initial state. Please do not modify.
 
-    1 => array(
-        "name" => "gameSetup",
-        "description" => "",
-        "type" => "manager",
-        "action" => "stGameSetup",
-        "transitions" => ["" => 2]
-    ),
-
-    // Note: ID=2 => your first state
-
-    2 => [
-        "name" => "playerTurn",
-        "description" => clienttranslate('${actplayer} must play a card or pass'),
-        "descriptionmyturn" => clienttranslate('${you} must play a card or pass'),
-        "type" => "activeplayer",
-        "args" => "argPlayerTurn",
-        "possibleactions" => [
-            // these actions are called from the front with bgaPerformAction, and matched to the function on the game.php file
-            "actPlayCard", 
-            "actPass",
-        ],
-        "transitions" => ["playCard" => 3, "pass" => 3]
-    ],
-
-    3 => [
-        "name" => "nextPlayer",
-        "description" => '',
-        "type" => "game",
-        "action" => "stNextPlayer",
-        "updateGameProgression" => true,
-        "transitions" => ["endGame" => 99, "nextPlayer" => 2]
-    ],
-
-    // Final state.
-    // Please do not modify (and do not overload action/args methods).
-    99 => [
-        "name" => "gameEnd",
-        "description" => clienttranslate("End of game"),
-        "type" => "manager",
-        "action" => "stGameEnd",
-        "args" => "argGameEnd"
-    ],
+    ST_BGA_GAME_SETUP => array(
+      "name" => "gameSetup",
+      "description" => clienttranslate("Game setup"),
+      "type" => "manager",
+      "action" => "stGameSetup",
+      "transitions" => array( "" => ST_ROLL )
+  ),
+  
+  ST_ROLL => array(
+      "name" => "playerTurn",
+      "description" => clienttranslate('${actplayer} must choose a die'),
+      "descriptionmyturn" => clienttranslate('${you} must choose at least one die'),
+      "type" => "activeplayer",
+      "args" => "argPlayerTurn",
+      "possibleactions" => array( 'lock', 'score' ),
+      "transitions" => array( "lock" => ST_REROLL, "score" => ST_NEXT_PLAYER, "zombiePass" => ST_NEXT_PLAYER )
+  ),
+  ST_REROLL => array(
+    "name" => "playerTurn",
+    "description" => clienttranslate('${actplayer} can re-roll remaining dice'),
+    "descriptionmyturn" => clienttranslate('${you} can re-roll remaining dice'),
+    "type" => "activeplayer",
+    "args" => "argPlayerTurn",
+    "possibleactions" => array( 'reRoll', 'score' ),
+    "transitions" => array( "reRoll" => ST_ROLL, "score" => ST_NEXT_PLAYER, "zombiePass" => ST_NEXT_PLAYER )
+  ),
+  
+  ST_NEXT_PLAYER => array(
+      "name" => "nextPlayer",
+      "type" => "game",
+      "action" => "stNextPlayer",
+      "updateGameProgression" => true,        
+      "transitions" => array( "nextTurn" => ST_ROLL, "endGame" => ST_END_GAME )
+  ),
+ 
+  ST_END_GAME => array(
+      "name" => "gameEnd",
+      "description" => clienttranslate("End of game"),
+      "type" => "manager",
+      "action" => "stGameEnd",
+      "args" => "argGameEnd"
+  )
 
 ];
-
-
 

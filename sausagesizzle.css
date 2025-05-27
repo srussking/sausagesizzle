@@ -67,6 +67,74 @@
     }
 */
 
+.player-table {
+  background-color: rgba(255,255,255, 0.5);
+  padding: 1rem;
+  margin-bottom: 2rem;
+}
+
+#dice-wrapper {
+  min-height: 2rem;
+  background-color: white;
+  align-items: center;
+}
+
+#dice {
+  display: flex;
+  align-content: center;
+}
+
+#dice .die {
+  width: 30px;
+  height: 30px;
+  margin-right: 12px;
+}
+
+#dice .die.critter {
+  background-color: antiquewhite;
+}
+
+#dice .die.food {
+  background-color: orangered;
+}
+
+
+
+.critter-tokens {
+  display: flex;
+}
+
+.player-table .critter-token {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  margin-right: 20px;
+}
+
+.player-table .critter-token.crocodile {
+  background-color: green;
+}
+
+.player-table .critter-token.echidna {
+  background-color: lightblue;
+}
+
+.player-table .critter-token.kangaroo {
+  background-color: red;
+}
+
+.player-table .critter-token.platypus {
+  background-color: pink;
+}
+
+.player-table .critter-token.quikka {
+  background-color: orange;
+}
+
+.player-table .critter-token.tiger_snake {
+  background-color: purple;
+}
+
 
 
 

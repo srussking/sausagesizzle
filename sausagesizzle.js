@@ -48,29 +48,44 @@ function (dojo, declare) {
         {
             console.log( "Starting game setup" );
 
-            // Example to add a div on the game area
+            document.getElementById('game_play_area').insertAdjacentHTML('beforeend', `
+              <div id="dice-wrapper"><div id="dice"></div></div>
+          `);
             document.getElementById('game_play_area').insertAdjacentHTML('beforeend', `
                 <div id="player-tables"></div>
             `);
             
             // Setting up player boards
             Object.values(gamedatas.players).forEach(player => {
-                // example of setting up players boards
-                this.getPlayerPanelElement(player.id).insertAdjacentHTML('beforeend', `
-                    <div id="player-counter-${player.id}">A player counter</div>
-                `);
+              document.getElementById('player-tables').insertAdjacentHTML('beforeend', `
+                  <div id="player-table-${player.id}" class="player-table">
+                      <strong>${player.name}</strong>
+                      <div id="critter-tokens-${player.id}" class="critter-tokens">
+                      </div>
+                  </div>
+              `);
 
-                // example of adding a div for each player
-                document.getElementById('player-tables').insertAdjacentHTML('beforeend', `
-                    <div id="player-table-${player.id}">
-                        <strong>${player.name}</strong>
-                        <div>Player zone content goes here</div>
-                    </div>
-                `);
+              gamedatas.all_critters.forEach(critter => {
+                const scored = gamedatas.scored_critters.filter(v => v.critter == critter.id).length > 0
+                document.getElementById(`critter-tokens-${player.id}`).insertAdjacentHTML('beforeend', 
+                  `<div class="critter-token ${critter.name} ${scored ? 'scored': ''}"><div>`
+                );  
+              })
+
+
             });
             
-            // TODO: Set up your game interface here, according to "gamedatas"
-            
+              gamedatas.dice.forEach(die => {
+                const die_type_s = die.type == 1 ? "food" : "critter"
+                document.getElementById('dice').insertAdjacentHTML('beforeend', 
+                  `<div class="die ${die_type_s} die-${die_type_s}-${die.value}" data-type="${die_type_s}" data-id="${die.id}" data-value="${die.value}">
+                  </div>`
+                )
+              })
+
+            //TODO: add dice faces for animation should be something like this:
+            //<div class="side" data-side="1"></div><div class="side" data-side="2"></div><div class="side" data-side="3"></div><div class="side" data-side="4"></div><div class="side" data-side="5"></div><div class="side" data-side="6"></div></div>`
+
  
             // Setup game notifications to handle (see "setupNotifications" method below)
             this.setupNotifications();

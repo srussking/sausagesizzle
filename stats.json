@@ -9,6 +9,6 @@
       "id" : 11,
       "name": "Number of sausages",
       "type": "int"
-    },
+    }
   }
 }

@@ -60,8 +60,18 @@ $machinestates = [
       "description" => clienttranslate("Game setup"),
       "type" => "manager",
       "action" => "stGameSetup",
-      "transitions" => array( "" => ST_ROLL )
+      "transitions" => array( "" => ST_INITIAL_ROLL )
   ),
+
+  ST_INITIAL_ROLL => [
+    "name" => "initialDiceRoll",
+    "description" => "",
+    "type" => "game",
+    "action" => "stInitialDiceRoll",
+    "transitions" => [ 
+        "" => ST_ROLL,
+    ],
+  ],
   
   ST_ROLL => array(
       "name" => "playerTurn",
@@ -70,24 +80,32 @@ $machinestates = [
       "type" => "activeplayer",
       "args" => "argPlayerTurn",
       "possibleactions" => array( 'lock', 'score' ),
-      "transitions" => array( "lock" => ST_REROLL, "score" => ST_NEXT_PLAYER, "zombiePass" => ST_NEXT_PLAYER )
+      "transitions" => array( "lock" => ST_REROLL, "score" => ST_RESOLVE, "zombiePass" => ST_RESOLVE )
   ),
   ST_REROLL => array(
-    "name" => "playerTurn",
+    "name" => "reRoll",
     "description" => clienttranslate('${actplayer} can re-roll remaining dice'),
     "descriptionmyturn" => clienttranslate('${you} can re-roll remaining dice'),
     "type" => "activeplayer",
     "args" => "argPlayerTurn",
     "possibleactions" => array( 'reRoll', 'score' ),
-    "transitions" => array( "reRoll" => ST_ROLL, "score" => ST_NEXT_PLAYER, "zombiePass" => ST_NEXT_PLAYER )
+    "transitions" => array( "reRoll" => ST_ROLL, "score" => ST_RESOLVE, "zombiePass" => ST_RESOLVE )
   ),
   
+  ST_RESOLVE => array(
+      "name" => "resolve",
+      "type" => "game",
+      "action" => "stResolve",
+      "updateGameProgression" => true,        
+      "transitions" => array( "nextTurn" => ST_NEXT_PLAYER )
+  ),
+    
   ST_NEXT_PLAYER => array(
       "name" => "nextPlayer",
       "type" => "game",
       "action" => "stNextPlayer",
       "updateGameProgression" => true,        
-      "transitions" => array( "nextTurn" => ST_ROLL, "endGame" => ST_END_GAME )
+      "transitions" => array( "nextTurn" => ST_INITIAL_ROLL, "endGame" => ST_END_GAME )
   ),
  
   ST_END_GAME => array(

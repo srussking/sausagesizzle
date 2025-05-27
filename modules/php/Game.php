@@ -19,6 +19,10 @@ declare(strict_types=1);
 namespace Bga\Games\SausageSizzle;
 
 require_once(APP_GAMEMODULE_PATH . "module/table/table.game.php");
+require_once('objects/dice.php');
+
+
+use SausageSizzle\Objects\Dice;
 
 class Game extends \Table
 {
@@ -225,7 +229,10 @@ class Game extends \Table
         $result["players"] = $this->getCollectionFromDb(
             "SELECT `player_id` `id`, `player_score` `score` FROM `player`"
         );
-
+        $activePlayerId = $this->getActivePlayerId();
+        $result['dice'] = $activePlayerId ? $this->getPlayerRolledDice() : [];
+        $result['scored_critters'] = $this->getPlayerCritters($current_player_id);
+        $result['all_critters'] = CRITTERS;
         // TODO: Gather all information about current game situation (visible by player $current_player_id).
 
         return $result;
@@ -278,9 +285,11 @@ class Game extends \Table
         $this->reloadPlayersBasicInfos();
 
         // Init global values with their initial values.
+        $this->DbQuery("INSERT INTO dice (`dice_value`, `type`) VALUES (0, 0), (0, 0), (0, 0), (0,0)");
+        $this->DbQuery("INSERT INTO dice (`dice_value`, `type`) VALUES (0, 1), (0, 1), (0, 1), (0, 1)");
 
         // Dummy content.
-        $this->setGameStateInitialValue("my_first_global_variable", 0);
+        // $this->setGameStateInitialValue("my_first_global_variable", 0);
 
         // Init game statistics.
         //
@@ -335,5 +344,95 @@ class Game extends \Table
         }
 
         throw new \feException("Zombie mode not supported at this game state: \"{$state_name}\".");
+    }
+
+    function stInitialDiceRoll() {
+      $playerId = $this->getActivePlayerId();
+      
+      $this->throwDice($playerId, true);
+  }
+
+
+    function getDice(int $number) {
+      $sql = "SELECT * FROM dice ORDER BY type,dice_value,dice_id limit $number";
+      $dbDices = $this->getCollectionFromDb($sql);
+      return array_map(fn($dbDice) => new Dice($dbDice), array_values($dbDices));
+    }
+
+   function getPlayerRolledDice() {
+      $dice = $this->getDice(8);
+      return $dice;
+    }
+
+    function getPlayerCritters(int $current_player_id){
+      $sql = "SELECT * FROM score WHERE `player_id` = $current_player_id";
+      return $this->getCollectionFromDb($sql);
+    }
+
+    function throwDice(int $playerId, bool $firstRoll) {
+      $dice = $this->getPlayerRolledDice($playerId, true, true, true);
+
+      $this->DbQuery( "UPDATE dice SET `rolled` = false ORDER BY type");
+
+      $lockedDice = [];
+      $rolledDice = [];
+
+      foreach ($dice as &$die) {
+          if ($die->locked) {
+              $lockedDice[] = $die;
+          } else {
+              $die->value = bga_rand(1, 6);
+              $this->DbQuery( "UPDATE dice SET `dice_value` = ".$die->value.", `rolled` = true where `dice_id` = ".$die->id );
+
+              $rolledDice[] = $die;
+          }
+      }
+
+      $message = null;
+
+      $rolledDiceStr = '';
+      $lockedDiceStr = '';
+
+      foreach ($rolledDice as $rolledDie) {
+          $rolledDiceStr .= $this->getDieFaceLogName($rolledDie->value, $rolledDie->type);;
+      }
+
+      if ($firstRoll) {
+          $message = clienttranslate('${player_name} rolls dice ${rolledDice}');
+      } else if (count($lockedDice) == 0) {
+          $message = clienttranslate('${player_name} rerolls dice ${rolledDice}');
+      } else {
+          foreach ($lockedDice as $lockedDie) {
+              $lockedDiceStr .= $this->getDieFaceLogName($lockedDie->value, $lockedDie->type);;
+          }
+
+          $message = clienttranslate('${player_name} keeps ${lockedDice} and rerolls dice ${rolledDice}');
+      }
+
+      $this->notifyAllPlayers("diceLog", $message, [
+          'playerId' => $playerId,
+          'player_name' => $this->getActivePlayerName(),
+          'rolledDice' => $rolledDiceStr,
+          'lockedDice' => $lockedDiceStr,
+      ]);
+    }
+
+    function getDieFaceLogName(int $face, int $type) {
+      if ($type == 0) {
+          switch($face) {
+              case 1: return "[diceCrocodile]"; 
+              case 2: return "[diceEchidna]";
+              case 3: return "[diceKangaroo]";
+              case 4: return "[dicePlatypus]";
+              case 5: return "[diceQuikka]";
+              case 6: return "[diceTigerSnake]";
+          }
+      } else if ($type == 1) {
+          switch($face) {
+              case 1:  case 6: return "[foodDieSausage]";
+              case 2: case 3: case 4: case 5: return "[foodDie$face]";
+      
+          }
+      }
     }
 }
